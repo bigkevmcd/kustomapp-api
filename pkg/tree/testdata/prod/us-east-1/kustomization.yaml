@@ -1,0 +1,11 @@
+resources:
+- ../bases
+commonLabels:
+  com.bigkevmcd/region: us-east-1
+patchesJson6902:
+- target:
+    group: apps
+    version: v1
+    kind: Deployment
+    name: backend
+  path: backend/demo_patch.yaml
