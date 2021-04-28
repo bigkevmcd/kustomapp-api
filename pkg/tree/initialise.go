@@ -12,17 +12,43 @@ import (
 // InitialiseDirectory creates a new directory structure for deploying from
 // environments.
 func InitialiseDirectory(root string, envs []string) error {
-	return initialBases(root)
+	if err := initialBases(root); err != nil {
+		return err
+	}
+	for _, e := range envs {
+		if err := makeEnvironment(root, e); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func initialBases(root string) error {
-	kus := kustypes.Kustomization{
+	return marshalToFile(filepath.Join(root, "bases/kustomization.yaml"), makeKustomization())
+}
+
+func makeEnvironment(root string, name string) error {
+	return marshalToFile(filepath.Join(root, name, "bases/kustomization.yaml"), makeKustomization(func(k *kustypes.Kustomization) {
+		k.Resources = []string{"../../bases"}
+		k.CommonLabels = map[string]string{
+			"com.bigkevmcd/environment": "staging",
+		}
+	}))
+}
+
+type kusOptFunc func(*kustypes.Kustomization)
+
+func makeKustomization(opts ...kusOptFunc) *kustypes.Kustomization {
+	kus := &kustypes.Kustomization{
 		TypeMeta: kustypes.TypeMeta{
 			APIVersion: kustypes.KustomizationVersion,
 			Kind:       kustypes.KustomizationKind,
 		},
 	}
-	return marshalToFile(filepath.Join(root, "bases/kustomization.yaml"), kus)
+	for _, o := range opts {
+		o(kus)
+	}
+	return kus
 }
 
 func marshalToFiles(m map[string]interface{}) error {

@@ -10,4 +10,6 @@ Feature: Application initialisation
     And a tree of files should be generated
       """
       bases/kustomization.yaml
+      dev/bases/kustomization.yaml
+      staging/bases/kustomization.yaml
       """

@@ -33,7 +33,6 @@ func makeInitCmd() *cobra.Command {
 	)
 	cmd.Flags().StringSlice(envsFlag, []string{}, "environments to generate")
 
-	logIfError(cmd.MarkFlagRequired(outputFlag))
 	logIfError(cmd.MarkFlagRequired(envsFlag))
 	logIfError(viper.BindPFlags(cmd.Flags()))
 	return cmd

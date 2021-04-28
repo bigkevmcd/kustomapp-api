@@ -20,6 +20,7 @@ func TestInitialiseDirectory(t *testing.T) {
 	}
 	want := []string{
 		"bases/kustomization.yaml",
+		"staging/bases/kustomization.yaml",
 	}
 	if diff := cmp.Diff(want, listTree(t, dir)); diff != "" {
 		t.Fatalf("failed to generate files:\n%s", diff)
