@@ -3,19 +3,22 @@ package features
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/cucumber/godog"
+	"github.com/cucumber/messages-go/v10"
 	"github.com/google/go-cmp/cmp"
 )
 
 type kustomFeature struct {
 	root       string
-	lastOutput []byte
+	lastOutput string
 }
 
 func (k *kustomFeature) aTemporaryDirectoryInTheEnvironment() error {
@@ -29,23 +32,24 @@ func (k *kustomFeature) aTemporaryDirectoryInTheEnvironment() error {
 
 func (k *kustomFeature) iRunSuccessfully(cmdArg string) error {
 	arg := strings.Split(cmdArg, " ")
-	cmd := exec.CommandContext(context.TODO(), arg[0], arg[1:]...)
-	cmd.Env = append(os.Environ(),
-		fmt.Sprintf("KAPP_TEMP=%s", k.root),
-	)
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to exec command %q: %w", cmdArg, err)
+	for i := range arg {
+		if arg[i] == "KAPP_TEMP" {
+			arg[i] = k.root
+			continue
+		}
 	}
+
+	cmd := exec.CommandContext(context.TODO(), arg[0], arg[1:]...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to exec command %q: %w", cmdArg, err)
 	}
-	k.lastOutput = output
+	k.lastOutput = strings.TrimSpace(string(output))
 	return nil
 }
 
 func (k *kustomFeature) iShouldGetTheMessage(arg1 string) error {
-	if diff := cmp.Diff(arg1, string(k.lastOutput)); diff != "" {
+	if diff := cmp.Diff(arg1, k.lastOutput); diff != "" {
 		return fmt.Errorf("failed to match output: %s", diff)
 	}
 	return nil
@@ -57,6 +61,30 @@ func (k *kustomFeature) cleanup(sc *godog.Scenario, err error) {
 	}
 }
 
+func (k *kustomFeature) aTreeOfFilesShouldBeGenerated(want *messages.PickleStepArgument_PickleDocString) error {
+	parsed := strings.Split(want.Content, "\n")
+	var dirs []string
+	err := filepath.WalkDir(k.root, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return fmt.Errorf("failed to WalkDir %s: %w", p, err)
+		}
+		if d.IsDir() {
+			return nil
+		}
+		dirs = append(dirs, strings.TrimPrefix(p, k.root+"/"))
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to list directories in %s: %w", k.root, err)
+	}
+
+	if diff := cmp.Diff(parsed, dirs); diff != "" {
+		return fmt.Errorf("failed to match output: %s", diff)
+	}
+	return nil
+}
+
 func InitializeScenario(ctx *godog.ScenarioContext) {
 	kf := &kustomFeature{}
 	ctx.AfterScenario(kf.cleanup)
@@ -64,4 +92,5 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I run successfully "([^"]*)"$`, kf.iRunSuccessfully)
 	ctx.Step(`^a temporary directory in the environment$`, kf.aTemporaryDirectoryInTheEnvironment)
 	ctx.Step(`^I should get the message "([^"]*)"$`, kf.iShouldGetTheMessage)
+	ctx.Step(`^a tree of files should be generated$`, kf.aTreeOfFilesShouldBeGenerated)
 }

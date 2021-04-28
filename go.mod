@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/cucumber/godog v0.11.0
+	github.com/cucumber/messages-go/v10 v10.0.3
 	github.com/go-git/go-billy/v5 v5.2.0
 	github.com/google/go-cmp v0.5.5
 	github.com/olekukonko/tablewriter v0.0.5
