@@ -4,8 +4,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/bigkevmcd/kustomapp-api/pkg/tree"
-	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -31,29 +29,12 @@ func initConfig() {
 
 func makeRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "kapp",
-		Short: "application manager",
-		Run: func(cmd *cobra.Command, args []string) {
-			fs := osfs.New(viper.GetString(pathFlag))
-			targets, err := tree.Targets(fs)
-			logIfError(err)
-
-			table := makeTable("Environment", "Cluster")
-			for _, v := range targets {
-				table.Append([]string{v.Environment, v.Cluster})
-			}
-
-			table.Render()
-
-		},
+		Use:           "kapp",
+		Short:         "application manager",
+		SilenceErrors: true,
 	}
-
-	cmd.Flags().String(
-		pathFlag,
-		".",
-		"directory to operate in",
-	)
-	logIfError(viper.BindPFlags(cmd.Flags()))
+	cmd.AddCommand(makeInitCmd())
+	cmd.AddCommand(makeTargetsCmd())
 	return cmd
 }
 
