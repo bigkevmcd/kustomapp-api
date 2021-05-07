@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	pathFlag = "path"
+	dirFlag = "dir"
 )
 
 func init() {
@@ -35,6 +35,7 @@ func makeRootCmd() *cobra.Command {
 	}
 	cmd.AddCommand(makeInitCmd())
 	cmd.AddCommand(makeTargetsCmd())
+	cmd.AddCommand(makeTargetCmd())
 	return cmd
 }
 

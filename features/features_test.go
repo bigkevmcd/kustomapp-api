@@ -31,15 +31,17 @@ func (k *kustomFeature) aTemporaryDirectoryInTheEnvironment() error {
 }
 
 func (k *kustomFeature) iRunSuccessfully(cmdArg string) error {
-	arg := strings.Split(cmdArg, " ")
-	for i := range arg {
-		if arg[i] == "KAPP_TEMP" {
-			arg[i] = k.root
+	args := strings.Split(cmdArg, " ")
+	for i := range args {
+		if args[i] == "KAPP_TEMP" {
+			args[i] = k.root
 			continue
 		}
 	}
 
-	cmd := exec.CommandContext(context.TODO(), arg[0], arg[1:]...)
+	log.Printf("KEVIN!!!! passing through %#v\n", args)
+
+	cmd := exec.CommandContext(context.TODO(), args[0], args[1:]...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to exec command %q: %w", cmdArg, err)

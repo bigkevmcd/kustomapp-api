@@ -12,7 +12,7 @@ func makeTargetsCmd() *cobra.Command {
 		Use:   "targets",
 		Short: "list target environments",
 		Run: func(cmd *cobra.Command, args []string) {
-			fs := osfs.New(viper.GetString(pathFlag))
+			fs := osfs.New(viper.GetString(dirFlag))
 			targets, err := tree.Targets(fs)
 			logIfError(err)
 
@@ -25,11 +25,11 @@ func makeTargetsCmd() *cobra.Command {
 	}
 
 	cmd.Flags().String(
-		pathFlag,
+		dirFlag,
 		".",
 		"directory to operate in",
 	)
-	logIfError(cmd.MarkFlagRequired(pathFlag))
+	logIfError(cmd.MarkFlagRequired(dirFlag))
 	logIfError(viper.BindPFlags(cmd.Flags()))
 	return cmd
 }

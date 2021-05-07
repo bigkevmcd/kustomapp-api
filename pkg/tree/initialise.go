@@ -9,6 +9,8 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+const DirPermission os.FileMode = 0755
+
 // InitialiseDirectory creates a new directory structure for deploying from
 // environments.
 func InitialiseDirectory(root string, envs []string) error {
@@ -27,11 +29,12 @@ func initialBases(root string) error {
 	return marshalToFile(filepath.Join(root, "bases/kustomization.yaml"), makeKustomization())
 }
 
-func makeEnvironment(root string, name string) error {
+// TODO: make this use a billy.Filesystem
+func makeEnvironment(root, name string) error {
 	return marshalToFile(filepath.Join(root, name, "bases/kustomization.yaml"), makeKustomization(func(k *kustypes.Kustomization) {
 		k.Resources = []string{"../../bases"}
 		k.CommonLabels = map[string]string{
-			"com.bigkevmcd/environment": "staging",
+			"com.bigkevmcd/environment": name,
 		}
 	}))
 }
@@ -65,7 +68,7 @@ func marshalToFile(filename string, v interface{}) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal %#v for %s: %w", v, filename, err)
 	}
-	if err := os.MkdirAll(filepath.Dir(filename), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(filename), DirPermission); err != nil {
 		return fmt.Errorf("failed to MkdirAll(%s): %w", filename, err)
 	}
 	if err := os.WriteFile(filename, b, 0644); err != nil {
